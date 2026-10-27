@@ -19,11 +19,13 @@ export default function ItemScreen() {
 
   const {
     carregando,
+    erro,
     produto,
     quantidade,
     decrementarQuantidade,
     incrementarQuantidade,
     formatarPreco,
+    recarregar,
   } = useItemViewModel(id);
 
   return (
@@ -136,7 +138,11 @@ export default function ItemScreen() {
         </ScrollView>
       ) : (
         <View style={styles.erroContainer}>
-          <Text style={styles.erroTexto}>Item não encontrado.</Text>
+          <Ionicons name="alert-circle-outline" size={48} color="#dc3545" />
+          <Text style={styles.erroTexto}>{erro || "Item não encontrado."}</Text>
+          <TouchableOpacity style={styles.botaoRetry} onPress={recarregar}>
+            <Text style={styles.textoBotaoRetry}>Tentar novamente</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -365,5 +371,20 @@ const styles = StyleSheet.create({
   erroTexto: {
     fontSize: 16,
     color: "#dc3545",
+    marginTop: 8,
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+  botaoRetry: {
+    marginTop: 16,
+    backgroundColor: "#501673",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  textoBotaoRetry: {
+    color: "#ffffff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });

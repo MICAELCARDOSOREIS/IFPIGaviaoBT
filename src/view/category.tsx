@@ -17,7 +17,7 @@ export default function CategoryScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const { carregando, produtos, nomeCategoria, formatarPreco } =
+  const { carregando, erro, produtos, nomeCategoria, formatarPreco, recarregar } =
     useCategoryViewModel(id);
 
   return (
@@ -45,6 +45,14 @@ export default function CategoryScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#501673" />
           <Text style={styles.loadingTexto}>Buscando itens no banco...</Text>
+        </View>
+      ) : erro ? (
+        <View style={styles.loadingContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color="#dc3545" />
+          <Text style={styles.erroTexto}>{erro}</Text>
+          <TouchableOpacity style={styles.botaoRetry} onPress={recarregar}>
+            <Text style={styles.textoBotaoRetry}>Tentar novamente</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -185,5 +193,24 @@ const styles = StyleSheet.create({
   vazioTexto: {
     fontSize: 15,
     color: "#8c959f",
+  },
+  erroTexto: {
+    marginTop: 12,
+    fontSize: 15,
+    color: "#dc3545",
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+  botaoRetry: {
+    marginTop: 16,
+    backgroundColor: "#501673",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  textoBotaoRetry: {
+    color: "#ffffff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });

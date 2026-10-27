@@ -1,73 +1,114 @@
-# 🦅 IFPI Gavião - Cardápio Digital (Versão Big Tripe)
+# 🦅 IFPI Gavião - Cardápio Digital (MVVM Sofisticado)
 
-> **Atividade Prática de Programação para Dispositivos Móveis (PDM) - IFPI**  
-> **Professor:** Iallen Gábio de Sousa Santos
-
----
-
-## 📱 Sobre o Projeto
-
-O **IFPI Gavião** é um aplicativo de cardápio digital desenvolvido com **React Native**, **Expo (v57)** e **TypeScript** para uma lanchonete fictícia institucional.
-
-O sufixo **"BT"** no nome do projeto refere-se ao padrão **"Big Tripe"** — uma referência bem-humorada à **ausência de padrão de projeto**, onde o desenvolvedor implementa tudo em um único arquivo (ou, no caso do Expo Router, tudo concentrado em um único arquivo por tela):
-- Acesso a dados e simulação de banco de dados diretamente na tela;
-- Regras de negócio e cálculos de apresentação misturados com a interface;
-- Gerenciamento direto de estado e controle de loading na própria View;
-- Ausência de separação arquitetural e estilização monolítica com `StyleSheet`.
-
-O banco de dados da aplicação é local, mas foi construído para simular um pequeno atraso assíncrono para entregar os dados, comportando-se como um banco de dados ou API de verdade.
+> **Atividade Prática de Programação para Dispositivos Móveis (PDM) - IFPI Piripiri | TADS**  
+> **Professor:** Iallen Gábio de Sousa Santos  
+> **Referência:** Capítulo 10 do Livro de PDM (*"MVVM Sofisticado com React Native, TypeScript e Expo"*)  
+> **Branch:** `feature/refactor-mvvm-sofisticado`
 
 ---
 
-## 🎯 Atividade Prática: Refatoração para o MVVM Simplificado
+## 📱 Sobre o Projeto e Evolução Arquitetural
 
-Esta aplicação serve como base para a atividade prática da disciplina.
+O **IFPI Gavião** é um aplicativo de cardápio digital para uma lanchonete institucional desenvolvido em **React Native**, **Expo (v57)** e **TypeScript**.
 
-A atividade consiste em:
-1. Fazer um **fork** deste repositório;
-2. Realizar uma **refatoração completa** do projeto para adequá-lo ao **MVVM Simplificado**, seguindo rigorosamente as recomendações, padrões e convenções apresentados nas aulas e no material didático (livro da disciplina de PDM);
-3. Garantir que a aplicação mantenha a mesma identidade visual, comportamento e simulação assíncrona do banco de dados após a refatoração.
+Nesta etapa, o projeto evoluiu do padrão **MVVM Simplificado** para a arquitetura profissional do **MVVM Sofisticado**, adotando princípios estritos de **Clean Architecture** e **Inversão de Dependências (DIP)**.
+
+### 🎯 O que mudou no MVVM Sofisticado?
+
+1. **Regras de Negócio em Use Cases (`src/usecase/`):**
+   * As ViewModels foram desoneradas de qualquer validação ou regra de domínio. Toda regra fica isolada em casos de uso (`menuUseCases.ts`) sob o contrato `iMenuUseCases.ts`.
+2. **Dependência Exclusiva de Abstrações (Interfaces):**
+   * Nem as ViewModels nem os Use Cases conhecem implementações concretas; interagem apenas através de contratos (`iProductDataSource.ts`, `iCategoryDataSource.ts`, `iMenuUseCases.ts`).
+3. **Isolamento da Infraestrutura (`src/infra/`):**
+   * A camada `src/infra/datasources/` gerencia o acesso aos dados com latência assíncrona simulada (`setTimeout`), traduzindo erros técnicos para erros de domínio (`DataSourceError`).
+4. **Injeção de Dependências Centralizada (`src/di/container.ts`):**
+   * Ponto único de composição (*Composition Root*) que instancia a infraestrutura e a amarra aos Use Cases.
+5. **Injeção por Parâmetro Padrão nas ViewModels (`src/viewmodel/`):**
+   * Os hooks recebem o UseCase por parâmetro padrão (`menu: IMenuUseCases = menuUseCases`), permitindo que a View consuma diretamente sem wrappers e que testes unitários passem mocks com facilidade.
+6. **Hierarquia de Erros de Domínio (`src/model/errors.ts`):**
+   * `DomainError`, `ValidationError`, `NotFoundError` e `DataSourceError`. As ViewModels checam `err instanceof DomainError` para fornecer mensagens amigáveis à UI.
 
 ---
 
-## 🚀 Como Executar o Projeto
+## 📂 Estrutura de Pastas (MVVM Sofisticado)
 
-1. **Clone o repositório (ou o seu Fork):**
+```text
+src/
+├── app/                          ← Rotas finas do Expo Router
+│   ├── _layout.tsx
+│   ├── index.tsx                 (delega para HomeScreen)
+│   ├── category/[id].tsx         (delega para CategoryScreen)
+│   └── item/[id].tsx             (delega para ItemScreen)
+├── view/                         ← Views: componentes visuais e telas
+│   ├── home.tsx                  (Tela 1: Categorias)
+│   ├── category.tsx              (Tela 2: Listagem de Itens)
+│   └── item.tsx                  (Tela 3: Detalhes do Lanche)
+├── viewmodel/                    ← ViewModels: Custom Hooks
+│   ├── useHomeViewModel.ts
+│   ├── useCategoryViewModel.ts
+│   └── useItemViewModel.ts
+├── di/                           ← Composition Root (Injeção de Dependências)
+│   └── container.ts              (instancia DataSources e exporta menuUseCases)
+├── usecase/                      ← Casos de Uso (regras de negócio puras)
+│   ├── iMenuUseCases.ts          (contrato)
+│   ├── menuUseCases.ts           (implementação)
+│   └── menuUseCases.test.ts      (suíte de testes automatizados)
+├── model/                        ← Domínio da aplicação
+│   ├── entities/                 (Categoria.ts, Produto.ts)
+│   ├── datasources/              (iCategoryDataSource.ts, iProductDataSource.ts)
+│   └── errors.ts                 (DomainError, ValidationError, DataSourceError)
+└── infra/                        ← Infraestrutura e acesso a dados
+    └── datasources/
+        ├── categoryDataSource.ts (implementa iCategoryDataSource com delay)
+        ├── productDataSource.ts  (implementa iProductDataSource com delay)
+        └── mockMenuData.ts       (dados em memória do cardápio)
+```
+
+---
+
+## 🧪 Testes Automatizados
+
+O projeto conta com suíte de testes unitários para a camada de Casos de Uso, garantindo a validação de regras de negócio desacoplada de React ou Expo:
+
+```bash
+bun test
+# ou
+npm test
+```
+
+Para verificar a integridade da tipagem TypeScript em todo o projeto:
+
+```bash
+bun run typecheck
+```
+
+---
+
+## 🚀 Como Executar o Aplicativo
+
+1. **Clone o repositório:**
    ```bash
-   git clone https://github.com/SEU_USUARIO/IFPIGaviaoBT.git
+   git clone https://github.com/MICAELCARDOSOREIS/IFPIGaviaoBT.git
    cd IFPIGaviaoBT
+   git checkout feature/refactor-mvvm-sofisticado
    ```
 
 2. **Instale as dependências:**
    ```bash
-   npm install
+   bun install # ou npm install
    ```
 
-3. **Inicie o servidor de desenvolvimento do Expo:**
+3. **Inicie o servidor do Expo:**
    ```bash
    npx expo start
    ```
 
-4. **Abra o aplicativo:**
-   - No celular físico usando o app **Expo Go** (leitura do QR Code).
-   - No emulador Android (`a`) ou simulador iOS (`i`).
-   - No navegador (`w`).
-
----
-
-## 📤 Instruções para Envio da Atividade
-
-1. Faça o **Fork** deste repositório para o seu perfil pessoal no GitHub.
-2. Clone o seu fork na sua máquina de desenvolvimento.
-3. Crie uma branch para o seu trabalho:
-   ```bash
-   git checkout -b feature/refactor-mvvm
-   ```
-4. Realize a refatoração completa para o **MVVM Simplificado**.
-5. Faça commits frequentes e bem descritos.
-6. Envie suas alterações para o seu GitHub e submeta o link do repositório conforme as orientações do professor no Google Classroom / SIGAA.
+4. **Execute no dispositivo:**
+   * Pressione `a` para emulador Android, `i` para simulador iOS ou `w` para Web.
+   * Ou escaneie o QR Code com o aplicativo **Expo Go** no seu smartphone.
 
 ---
 
 *IFPI - Campus Piripiri*  
-*Tecnologia em Análise e Desenvolvimento de Sistemas (TADS)*
+*Tecnologia em Análise e Desenvolvimento de Sistemas (TADS)*  
+*Disciplina: Programação para Dispositivos Móveis (PDM)*

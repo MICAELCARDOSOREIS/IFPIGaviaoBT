@@ -1,30 +1,39 @@
-import { useState, useEffect } from "react";
-import { Categoria } from "../model/Categoria";
-import { simularConsultaCategorias } from "../data/mockDatabase";
+import { useState, useEffect, useCallback } from "react";
+import type { Categoria } from "@/model/entities/Categoria";
+import { DomainError } from "@/model/errors";
+import { menuUseCases } from "@/di/container";
+import type { IMenuUseCases } from "@/usecase/iMenuUseCases";
 
-export function useHomeViewModel() {
+export function useHomeViewModel(menu: IMenuUseCases = menuUseCases) {
   const [carregando, setCarregando] = useState<boolean>(true);
+  const [erro, setErro] = useState<string | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
 
-  useEffect(() => {
-    async function carregarDados() {
-      try {
-        setCarregando(true);
-        // O mock retorna dados puros, então fazemos um cast para nossa tipagem Categoria
-        const resultado = await simularConsultaCategorias();
-        setCategorias(resultado as Categoria[]);
-      } catch (error) {
-        console.error("Erro ao carregar categorias:", error);
-      } finally {
-        setCarregando(false);
-      }
+  const carregarCategorias = useCallback(async () => {
+    try {
+      setCarregando(true);
+      setErro(null);
+      const resultado = await menu.getCategories();
+      setCategorias(resultado);
+    } catch (err) {
+      const mensagem =
+        err instanceof DomainError
+          ? err.message
+          : "Não foi possível carregar as categorias.";
+      setErro(mensagem);
+    } finally {
+      setCarregando(false);
     }
+  }, [menu]);
 
-    carregarDados();
-  }, []);
+  useEffect(() => {
+    carregarCategorias();
+  }, [carregarCategorias]);
 
   return {
     carregando,
+    erro,
     categorias,
+    recarregar: carregarCategorias,
   };
 }
